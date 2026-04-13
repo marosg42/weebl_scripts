@@ -23,7 +23,7 @@ Set these in a `.env` file or in your environment:
 | Variable | Description |
 |---|---|
 | `WEEBL_API_BASE` | Base URL for the Weebl API |
-| `WEEBL_TESTRUNS_BASE` | Base URL for the test runs UI |
+| `WEEBL_TESTRUNS_BASE` | Base URL for the test runs UI (used to generate clickable links in output) |
 | `WEEBL_TOKEN` | API authentication token |
 
 #### Usage
