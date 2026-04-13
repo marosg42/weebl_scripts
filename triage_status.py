@@ -161,6 +161,14 @@ def main():
         finished_params["completed_at_from"] = since
 
     finished = fetch_all(session, f"{API_BASE}/pipelines/", finished_params)
+    if since:
+        # Filter client-side because the API ignores the completed_at_from param
+        since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
+        finished = [
+            p for p in finished
+            if p.get("completed_at") and
+            datetime.fromisoformat(p["completed_at"].replace("Z", "+00:00")) >= since_dt
+        ]
 
     in_progress_raw = fetch_all(
         session,
