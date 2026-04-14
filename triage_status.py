@@ -43,9 +43,12 @@ def fetch_all(session, url, params, page_size=100):
         resp.raise_for_status()
         data = resp.json()
         results.extend(data["results"])
+        total = data.get("count", "?")
+        print(f"\r  fetching: {len(results)}/{total}", end="", file=sys.stderr, flush=True)
         if not data.get("next"):
             break
         params["offset"] += params["limit"]
+    print(file=sys.stderr)
     return results
 
 
@@ -170,19 +173,6 @@ def main():
             datetime.fromisoformat(p["completed_at"].replace("Z", "+00:00")) >= since_dt
         ]
 
-    in_progress_raw = fetch_all(
-        session,
-        f"{API_BASE}/pipelines/",
-        {"triaged": "false", "completed": "false", "ordering": "-created_at"},
-        page_size=2000,
-    )
-    # Exclude empty/queued pipelines that haven't actually started yet
-    in_progress = [
-        p
-        for p in in_progress_raw
-        if p.get("started_at") or p.get("sku") or p.get("job")
-    ]
-
     # Split finished into triaged (with triager) vs untriaged
     if args.ignore_triagers:
         with_triager = []
@@ -195,19 +185,6 @@ def main():
     by_addon = defaultdict(list)
     for p in without_triager:
         by_addon[addon_name(p)].append(p)
-
-    # ── In progress ──────────────────────────────────────────────────────────
-    print(f"\n{'=' * 60}")
-    print(f"  IN PROGRESS  ({len(in_progress)} jobs)")
-    print(f"{'=' * 60}")
-    if not in_progress:
-        print("  (none)")
-    for p in in_progress:
-        started = fmt_time(p.get("started_at") or p.get("created_at"))
-        job = p.get("job") or {}
-        user = job.get("user") or {}
-        owner = user.get("username", "?") if isinstance(user, dict) else "?"
-        print_pipeline(p, extra=f"  started {started}  owner: {owner}")
 
     # ── Finished — triager assigned ──────────────────────────────────────────
     if not args.ignore_triagers:
