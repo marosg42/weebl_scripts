@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# No human brain cell was harmed - all AI generated.
+
 # Script to get all testplan instances from API
 # Usage: ./get_all_testplaninstances_formatted.sh
 
