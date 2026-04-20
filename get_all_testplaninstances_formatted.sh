@@ -83,9 +83,8 @@ with open('/tmp/testplaninstances_response.json', 'r') as f:
 filtered_tpi = []
 for tpi in data:
     created = tpi.get('created_at', '')
-    status = tpi.get('status', {}).get('name', '')
-    
-    if created and status == 'Passed':
+
+    if created:
         try:
             dt = datetime.fromisoformat(created.replace('Z', '+00:00'))
             # Filter for November 2025 onwards
@@ -139,6 +138,18 @@ for tpi in filtered_tpi:
                     product_name = db_version + ' rev ' + revision
                 else:
                     # Fallback
+                    revision_match = re.search(r'\((\d+)\)', product_name)
+                    if revision_match:
+                        product_name = 'rev ' + revision_match.group(1)
+            # For microstack/openstack-snap, extract version, revision and channel
+            elif 'openstack-snap' in product_name:
+                ms_match = re.search(r'openstack-snap-(\d+\.\d+(?:\.\d+)?)\((\d+)\)-[^/]+/(\S+)', product_name)
+                if ms_match:
+                    ms_version = ms_match.group(1)
+                    revision = ms_match.group(2)
+                    channel = ms_match.group(3)
+                    product_name = ms_version + ' rev ' + revision + ' ' + channel
+                else:
                     revision_match = re.search(r'\((\d+)\)', product_name)
                     if revision_match:
                         product_name = 'rev ' + revision_match.group(1)
