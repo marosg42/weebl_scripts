@@ -184,11 +184,18 @@ for tpi in filtered_tpi:
     except:
         date_formatted = created
     
+    # Get status
+    if tpi.get('status') and tpi['status'].get('name'):
+        status = tpi['status']['name']
+    else:
+        status = 'N/A'
+
     product_groups[product_group].append({
         'date': created,
         'date_formatted': date_formatted,
         'testplan_name': testplan_name,
-        'product_name': product_name
+        'product_name': product_name,
+        'status': status,
     })
 
 # Sort groups by product name and sort items within each group by date
@@ -214,7 +221,7 @@ for product in sorted(product_groups.keys()):
         testplan = item['testplan_name']
         version = item['product_name']
         
-        print(f\"{item['date_formatted']} {testplan} {version}\")
+        print(f\"{item['date_formatted']}  {item['status']:<12}  {testplan}  {version}\")
     
     print()
 "
