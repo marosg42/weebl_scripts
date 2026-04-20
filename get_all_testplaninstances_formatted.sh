@@ -253,7 +253,7 @@ for product in sorted(product_groups.keys()):
         # Uppercase first letter (MAAS, Juju, etc)
         display_name = product.upper() if len(product) <= 4 else product.capitalize()
     
-    print(display_name)
+    print(f\"{display_name} ({len(product_groups[product])})\")
     
     items = sorted(product_groups[product], key=lambda x: x['date'])
     for item in items:
