@@ -23,6 +23,22 @@ fi
 TOKEN="$WEEBL_TOKEN"
 API_BASE="$WEEBL_API_BASE"
 
+# Parse --from and --to arguments
+ARG_FROM=""
+ARG_TO=""
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --from) ARG_FROM="$2"; shift 2 ;;
+        --to)   ARG_TO="$2";   shift 2 ;;
+        *) echo "Unknown argument: $1"; exit 1 ;;
+    esac
+done
+
+if [ -n "$ARG_TO" ] && [ -z "$ARG_FROM" ]; then
+    echo "Error: --to requires --from to be set"
+    exit 1
+fi
+
 # Initialize variables for pagination
 OFFSET=0
 LIMIT=100
@@ -73,22 +89,44 @@ TOTAL_COUNT=$(jq 'length' /tmp/testplaninstances_response.json)
 # Generate report using Python for better JSON handling and sorting
 python3 -c "
 import json
-from datetime import datetime
+import sys
+from datetime import date, datetime, timezone
 from collections import defaultdict
+
+arg_from = '$ARG_FROM'
+arg_to   = '$ARG_TO'
+
+# Determine filter range
+def parse_date_arg(s):
+    return datetime.strptime(s, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+
+today = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59, microsecond=999999)
+
+if arg_from:
+    date_from = parse_date_arg(arg_from)
+    date_to   = parse_date_arg(arg_to).replace(hour=23, minute=59, second=59, microsecond=999999) if arg_to else today
+else:
+    # Default: nearest past Nov 1 or May 1
+    now = datetime.now(timezone.utc)
+    candidates = []
+    for year in [now.year - 1, now.year]:
+        for month in [5, 11]:
+            d = datetime(year, month, 1, tzinfo=timezone.utc)
+            if d <= now:
+                candidates.append(d)
+    date_from = max(candidates)
+    date_to   = today
 
 with open('/tmp/testplaninstances_response.json', 'r') as f:
     data = json.load(f)
 
-# Filter for November 2025 onwards and Passed status
 filtered_tpi = []
 for tpi in data:
     created = tpi.get('created_at', '')
-
     if created:
         try:
             dt = datetime.fromisoformat(created.replace('Z', '+00:00'))
-            # Filter for November 2025 onwards
-            if dt.year > 2025 or (dt.year == 2025 and dt.month >= 11):
+            if date_from <= dt <= date_to:
                 filtered_tpi.append(tpi)
         except:
             pass

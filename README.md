@@ -59,8 +59,13 @@ Set these in a `.env` file or in your environment:
 #### Usage
 
 ```
-./get_all_testplaninstances_formatted.sh
+./get_all_testplaninstances_formatted.sh [--from YYYY-MM-DD] [--to YYYY-MM-DD]
 ```
+
+| Flag | Description |
+|---|---|
+| `--from DATE` | Filter from this date (inclusive). If omitted, defaults to the nearest past Nov 1 or May 1. |
+| `--to DATE` | Filter up to this date (inclusive). Requires `--from`. If omitted with `--from`, defaults to today. |
 
 #### Output
 
